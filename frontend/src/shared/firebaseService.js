@@ -1,37 +1,60 @@
 // Firebase Realtime Database REST Integration Service
-// This utility allows the HydroSmart dashboard to connect directly to Firebase Realtime Database 
-// without pulling in the bulky Firebase npm package, keeping the compiled web client extremely lightweight.
+// Connects HydroSmart dashboard directly to Firebase Realtime Database
+// via lightweight REST API without heavy SDK dependencies.
 
-// TO ACTIVATE FIREBASE LIVE DATA: Change this flag to true and set your database URL below.
-export const USE_FIREBASE = false;
+// User project ID: hydrosmart-sensor-data
+export const DEFAULT_FIREBASE_DB_URL = "https://hydrosmart-sensor-data-default-rtdb.firebaseio.com";
 
-// Set your Firebase Realtime Database REST URL (e.g., https://your-project-rtdb.firebaseio.com)
-const FIREBASE_DB_URL = "https://hydrosmart-default-rtdb.firebaseio.com";
+// Check local storage for runtime configuration
+export function getFirebaseUrl() {
+  return localStorage.getItem('hydrosmart_firebase_url') || DEFAULT_FIREBASE_DB_URL;
+}
+
+export function isFirebaseEnabled() {
+  const stored = localStorage.getItem('hydrosmart_use_firebase');
+  // Enabled by default if user desires, or can be toggled
+  return stored !== null ? stored === 'true' : true;
+}
+
+export const USE_FIREBASE = isFirebaseEnabled();
 
 /**
  * Fetch the complete live telemetry payload from Firebase Realtime Database
  */
 export async function getTelemetryFromFirebase() {
+  const dbUrl = getFirebaseUrl().replace(/\/$/, "");
   try {
-    const response = await fetch(`${FIREBASE_DB_URL}/telemetry.json`);
-    if (!response.ok) throw new Error("Firebase RTDB fetch failed");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch(`${dbUrl}/telemetry.json`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) throw new Error(`Firebase RTDB fetch failed: ${response.statusText}`);
     const data = await response.json();
+    if (!data) return null;
+
+    // Ensure TDS Nutrients field exists in sensors
+    if (data.sensors) {
+      if (!data.sensors.tds && data.sensors.ec) {
+        data.sensors.tds = Math.round(data.sensors.ec * 500);
+      }
+    }
+
     return data;
   } catch (error) {
-    console.error("[Firebase Service] Error fetching telemetry:", error);
+    console.warn("[Firebase Service] Fallback to local simulator due to:", error.message);
     return null;
   }
 }
 
 /**
  * Update a physical hardware override relay state in Firebase
- * @param {string} device - Name of the relay device (e.g., 'waterPump', 'growLights')
- * @param {boolean} state - Active state of the device (true = ON, false = OFF)
  */
 export async function updateOverrideInFirebase(device, state) {
-  if (!USE_FIREBASE) return { success: true };
+  if (!isFirebaseEnabled()) return { success: true };
+  const dbUrl = getFirebaseUrl().replace(/\/$/, "");
   try {
-    const response = await fetch(`${FIREBASE_DB_URL}/telemetry/overrides.json`, {
+    const response = await fetch(`${dbUrl}/telemetry/overrides.json`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [device]: state })
@@ -46,13 +69,12 @@ export async function updateOverrideInFirebase(device, state) {
 
 /**
  * Set the active crop and growth stage in Firebase Realtime Database
- * @param {string} crop - Selected crop key (e.g., 'lettuce', 'pechay', 'spinach')
- * @param {string} stage - Crop growth stage (e.g., 'Seedling', 'Vegetative', 'Harvest')
  */
 export async function selectCropInFirebase(crop, stage) {
-  if (!USE_FIREBASE) return { success: true };
+  if (!isFirebaseEnabled()) return { success: true };
+  const dbUrl = getFirebaseUrl().replace(/\/$/, "");
   try {
-    const response = await fetch(`${FIREBASE_DB_URL}/telemetry.json`, {
+    const response = await fetch(`${dbUrl}/telemetry.json`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ activeCrop: crop, activeStage: stage })
@@ -62,5 +84,22 @@ export async function selectCropInFirebase(crop, stage) {
   } catch (error) {
     console.error("[Firebase Service] Error setting crop profile:", error);
     return null;
+  }
+}
+
+/**
+ * Test Firebase Connection
+ */
+export async function testFirebaseConnection(customUrl) {
+  const dbUrl = (customUrl || getFirebaseUrl()).replace(/\/$/, "");
+  try {
+    const response = await fetch(`${dbUrl}/telemetry.json`);
+    if (response.ok) {
+      const data = await response.json();
+      return { ok: true, hasData: data !== null, data };
+    }
+    return { ok: false, error: `HTTP ${response.status}: ${response.statusText}` };
+  } catch (err) {
+    return { ok: false, error: err.message };
   }
 }

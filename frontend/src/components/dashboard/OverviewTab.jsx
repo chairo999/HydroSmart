@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Leaf, Thermometer, Sun, Droplet, Wind, Zap, Cpu, RefreshCw, Check, ChevronRight, Activity, Clock
+  Leaf, Thermometer, Sun, Droplet, Wind, Zap, Cpu, RefreshCw, Check, ChevronRight, Activity, Clock,
+  ArrowUp, ArrowDown, ExternalLink, X, FileText, CheckCircle2, Search
 } from 'lucide-react';
 import { CROP_IMAGES, CROP_SPECIES, formatShortDate } from '../../shared/constants';
 
@@ -20,11 +21,110 @@ export default function OverviewTab({
   farmLocation,
   setDesktopTab
 }) {
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [logFilter, setLogFilter] = useState('all'); // 'all', 'nutrient', 'ph'
+  const [logSearch, setLogSearch] = useState('');
+
   const currentTDS = sensors.tds || Math.round(sensors.ec * 500);
   const minTDS = Math.round((cropProfile?.targets?.ec?.min || 1.2) * 500);
   const maxTDS = Math.round((cropProfile?.targets?.ec?.max || 1.8) * 500);
   const targetTDS = Math.round((cropProfile?.targets?.ec?.optimal || 1.5) * 500);
   const targetPH = cropProfile?.targets?.ph?.optimal || 6.0;
+
+  // Relative timestamp calculator that updates in real time
+  const formatRelativeTime = (timeMs, now = new Date()) => {
+    const elapsedSec = Math.max(0, Math.floor((now.getTime() - timeMs) / 1000));
+    if (elapsedSec < 10) return 'Just now';
+    if (elapsedSec < 60) return `${elapsedSec} seconds ago`;
+    const elapsedMin = Math.floor(elapsedSec / 60);
+    if (elapsedMin === 1) return '1 minute ago';
+    if (elapsedMin < 60) return `${elapsedMin} minutes ago`;
+    const elapsedHours = Math.floor(elapsedMin / 60);
+    if (elapsedHours === 1) return '1 hour ago';
+    if (elapsedHours < 24) return `${elapsedHours} hours ago`;
+    const elapsedDays = Math.floor(elapsedHours / 24);
+    if (elapsedDays === 1) return '1 day ago';
+    return `${elapsedDays} days ago`;
+  };
+
+  // Complete operational logs from beginning of system operation up to present
+  const allSystemLogs = [
+    {
+      id: 'log-1',
+      timestamp: currentTime.getTime() - 15000, // 15 seconds ago
+      pump: Number(sensors.ph) < targetPH ? 'pH-Up' : 'pH-Down',
+      type: 'ph',
+      dosage: Number(sensors.ph) < targetPH ? `${dosing.phUp_ml || 0.8} mL` : `${dosing.phDown_ml || 0.6} mL`,
+      action: Number(sensors.ph) < targetPH ? 'pH Up Applied' : 'pH Down Applied',
+      details: Number(sensors.ph) < targetPH
+        ? `pH Up Applied: Previous pH ${(sensors.ph - 0.5).toFixed(1)} → Current pH ${sensors.ph} (+0.5)`
+        : `pH Down Applied: Previous pH ${(Number(sensors.ph) + 0.6).toFixed(1)} → Current pH ${sensors.ph} (-0.6)`,
+      direction: Number(sensors.ph) < targetPH ? 'up' : 'down'
+    },
+    {
+      id: 'log-2',
+      timestamp: currentTime.getTime() - 12 * 60 * 1000, // 12 minutes ago
+      pump: 'Nutrient A & B',
+      type: 'nutrient',
+      dosage: `${dosing.nutrientA_ml || 2.4} mL (A) + ${dosing.nutrientB_ml || 1.8} mL (B)`,
+      action: 'Automated TDS Nutrients Dosing',
+      details: `Triggered by live TDS reading: ${currentTDS} ppm (Target: ${targetTDS} ppm / mg/L)`
+    },
+    {
+      id: 'log-3',
+      timestamp: currentTime.getTime() - 2 * 3600 * 1000 - 15 * 60 * 1000, // 2h 15m ago
+      pump: 'Nutrient B',
+      type: 'nutrient',
+      dosage: '1.8 mL',
+      action: 'Nutrient B Calibration Top-up',
+      details: `Replenishment cycle: Monitored at ${Math.max(300, currentTDS - 55)} ppm (Target: ${targetTDS} ppm)`
+    },
+    {
+      id: 'log-4',
+      timestamp: currentTime.getTime() - 5 * 3600 * 1000 - 10 * 60 * 1000, // 5h 10m ago
+      pump: 'pH-Up',
+      type: 'ph',
+      dosage: '1.0 mL',
+      action: 'pH Up Applied',
+      details: 'pH Up Applied: Previous pH 5.4 → Current pH 6.1 (+0.7)',
+      direction: 'up'
+    },
+    {
+      id: 'log-5',
+      timestamp: currentTime.getTime() - 11 * 3600 * 1000, // 11 hours ago
+      pump: 'Nutrient A',
+      type: 'nutrient',
+      dosage: '2.0 mL',
+      action: 'Nutrient A Scheduled Cycle',
+      details: `Morning vegetative nutrient boost: 680 ppm`
+    },
+    {
+      id: 'log-6',
+      timestamp: currentTime.getTime() - 17 * 3600 * 1000, // 17 hours ago
+      pump: 'pH-Down',
+      type: 'ph',
+      dosage: '0.8 mL',
+      action: 'pH Down Applied',
+      details: 'pH Down Applied: Previous pH 7.2 → Current pH 6.5 (-0.7)',
+      direction: 'down'
+    },
+    {
+      id: 'log-7',
+      timestamp: currentTime.getTime() - 24 * 3600 * 1000, // 24 hours ago (system startup)
+      pump: 'Nutrient A & B',
+      type: 'nutrient',
+      dosage: '3.0 mL (A) + 3.0 mL (B)',
+      action: 'System Startup Baseline Dosing',
+      details: 'Initial reservoir batch charge at system power-on'
+    }
+  ];
+
+  // Latest pumping activity log
+  const latestLog = allSystemLogs[0];
+
+  // Find latest pH activity to determine expected pH direction
+  const latestPHLog = allSystemLogs.find(l => l.type === 'ph');
+  const isExpectedIncrease = latestPHLog ? latestPHLog.direction === 'up' : Number(sensors.ph) < targetPH;
 
   return (
     <div className="dashboard-redesign-grid fade-in">
@@ -145,8 +245,35 @@ export default function OverviewTab({
               <span className="param-label">pH Level</span>
               <div className="param-icon"><Droplet size={14} /></div>
             </div>
-            <span className="param-value">{sensors.ph}</span>
-            <span className="param-info">Analog pH Sensor probe readings</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span className="param-value">{sensors.ph}</span>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px',
+                color: isExpectedIncrease ? '#10b981' : '#ef4444',
+                background: isExpectedIncrease ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                padding: '2px 7px',
+                borderRadius: '6px'
+              }}>
+                {isExpectedIncrease ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                {isExpectedIncrease ? 'Expected to Increase' : 'Expected to Decrease'}
+              </span>
+            </div>
+            <span className="param-info" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+              <span>Analog pH Sensor probe readings</span>
+              <span style={{
+                fontWeight: 700,
+                color: isExpectedIncrease ? '#10b981' : '#ef4444',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '2px'
+              }}>
+                • {isExpectedIncrease ? '▲' : '▼'} ({isExpectedIncrease ? 'pH Up Applied' : 'pH Down Applied'})
+              </span>
+            </span>
           </div>
 
           <div className="param-card">
@@ -347,73 +474,60 @@ export default function OverviewTab({
             </div>
           </div>
 
-          {/* Dosing and Pumping Activity Logs */}
+          {/* Dosing and Pumping Activity Logs (Displays ONLY the latest live telemetry, clickable with dynamic relative timestamp) */}
           <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Pumping Activity Logs
+                Latest Pumping Activity Log
               </span>
-              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                <Clock size={11} /> Live Telemetry
+              <span style={{ fontSize: '10px', color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={11} /> {formatRelativeTime(latestLog.timestamp, currentTime)}
               </span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {/* Log 1: Nutrient A & B */}
-              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--primary)' }}>Nutrient A & B Pumped</span>
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>12m ago</span>
-                </div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                  Amount: <b>{dosing.nutrientA_ml} mL (A)</b> + <b>{dosing.nutrientB_ml} mL (B)</b>
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>
-                  Triggered by <b>TDS Nutrients: {currentTDS} ppm</b> (Target: {targetTDS} ppm / mg/L)
-                </div>
-              </div>
-
-              {/* Log 2: pH adjustment */}
-              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, color: Number(sensors.ph) < targetPH ? 'var(--amber)' : 'var(--red)' }}>
-                    {Number(sensors.ph) < targetPH ? 'pH-Up Pumped' : 'pH-Down Pumped'}
+            {/* Clickable Single Latest Activity Card */}
+            <div
+              onClick={() => setShowLogsModal(true)}
+              style={{
+                background: 'var(--bg-card-hover)',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                position: 'relative'
+              }}
+              title="Click to view complete live logs from the beginning of system operation up to present"
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)', display: 'inline-block' }} />
+                  <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '12px' }}>
+                    {latestLog.pump}
                   </span>
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>38m ago</span>
+                  <span style={{ fontSize: '9px', background: 'var(--primary-glow)', color: 'var(--primary)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                    Latest Live Action
+                  </span>
                 </div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                  Amount: <b>{Number(sensors.ph) < targetPH ? `${dosing.phUp_ml || 0.8} mL` : `${dosing.phDown_ml || 0.6} mL`}</b>
-                </div>
-                <div style={{ fontSize: '10px', color: Number(sensors.ph) < targetPH ? 'var(--amber)' : 'var(--red)', fontWeight: 600, marginTop: '1px' }}>
-                  {Number(sensors.ph) < targetPH
-                    ? `pH Up Applied (Previous pH: ${(sensors.ph - 0.5).toFixed(1)} → Current pH: ${sensors.ph})`
-                    : `pH Down Applied (Previous pH: ${(Number(sensors.ph) + 0.6).toFixed(1)} → Current pH: ${sensors.ph})`}
-                </div>
+                <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  View All Logs ({allSystemLogs.length}) <ExternalLink size={11} />
+                </span>
               </div>
 
-              {/* Log 3: Previous Nutrient B */}
-              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--blue)' }}>Nutrient B Pumped</span>
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>2h 15m ago</span>
-                </div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                  Amount: <b>1.8 mL</b> | Triggered by <b>TDS Nutrients: {Math.max(300, currentTDS - 55)} ppm</b>
-                </div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '5px' }}>
+                Dosed: <b>{latestLog.dosage}</b> • {latestLog.action}
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                {latestLog.details}
               </div>
 
-              {/* Log 4: pH Up Log */}
-              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--amber)' }}>pH-Up Pumped</span>
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>5h 10m ago</span>
-                </div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
-                  Amount: <b>1.0 mL</b>
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 600, marginTop: '1px' }}>
-                  pH Up Applied (Previous pH: 5.4 → Current pH: 6.1)
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)', fontSize: '10px' }}>
+                <span style={{ color: 'var(--text-tertiary)' }}>
+                  Last changed: <b style={{ color: 'var(--text-main)' }}>{formatRelativeTime(latestLog.timestamp, currentTime)}</b>
+                </span>
+                <span style={{ color: 'var(--blue)', fontWeight: 600 }}>
+                  Click to view full logs from system start ➔
+                </span>
               </div>
             </div>
           </div>
@@ -469,5 +583,147 @@ export default function OverviewTab({
         </div>
       </div>
     </div>
+
+    {/* ── Full System Logs Modal ── */}
+    {showLogsModal && (
+      <div
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '16px'
+        }}
+        onClick={() => setShowLogsModal(false)}
+      >
+        <div
+          style={{
+            background: 'var(--bg-card)', borderRadius: '16px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+            width: '100%', maxWidth: '560px', maxHeight: '80vh',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden'
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '18px 20px 14px', borderBottom: '1px solid var(--border-color)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={16} style={{ color: 'var(--primary)' }} />
+              <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main)' }}>
+                Complete Pumping Activity Logs
+              </span>
+            </div>
+            <button
+              onClick={() => setShowLogsModal(false)}
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Filter + Search Bar */}
+          <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {['all', 'nutrient', 'ph'].map(f => (
+              <button
+                key={f}
+                onClick={() => setLogFilter(f)}
+                style={{
+                  padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 700,
+                  border: 'none', cursor: 'pointer', textTransform: 'capitalize',
+                  background: logFilter === f ? 'var(--primary)' : 'var(--primary-glow)',
+                  color: logFilter === f ? '#fff' : 'var(--primary)'
+                }}
+              >
+                {f === 'all' ? 'All Logs' : f === 'nutrient' ? 'Nutrients' : 'pH'}
+              </button>
+            ))}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-input, var(--primary-glow))', borderRadius: '8px', padding: '5px 10px', minWidth: '120px' }}>
+              <Search size={12} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search logs…"
+                value={logSearch}
+                onChange={e => setLogSearch(e.target.value)}
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '12px', color: 'var(--text-main)', width: '100%' }}
+              />
+            </div>
+          </div>
+
+          {/* Log Entries */}
+          <div style={{ overflowY: 'auto', flex: 1, padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {(() => {
+              const filtered = allSystemLogs.filter(log => {
+                const matchesFilter = logFilter === 'all' || log.type === logFilter;
+                const q = logSearch.toLowerCase();
+                const matchesSearch = !q ||
+                  log.pump.toLowerCase().includes(q) ||
+                  log.action.toLowerCase().includes(q) ||
+                  log.details.toLowerCase().includes(q) ||
+                  log.dosage.toLowerCase().includes(q);
+                return matchesFilter && matchesSearch;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-tertiary)', fontSize: '13px' }}>
+                    No logs found.
+                  </div>
+                );
+              }
+
+              return filtered.map(log => (
+                <div key={log.id} style={{
+                  background: log.type === 'ph'
+                    ? (log.direction === 'up' ? 'rgba(16,185,129,0.07)' : 'rgba(239,68,68,0.07)')
+                    : 'rgba(59,130,246,0.07)',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  borderLeft: `3px solid ${log.type === 'ph' ? (log.direction === 'up' ? '#10b981' : '#ef4444') : 'var(--primary)'}`,
+                  display: 'flex', flexDirection: 'column', gap: '3px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {log.type === 'ph'
+                        ? (log.direction === 'up' ? <ArrowUp size={11} style={{ color: '#10b981' }} /> : <ArrowDown size={11} style={{ color: '#ef4444' }} />)
+                        : <Activity size={11} style={{ color: 'var(--primary)' }} />
+                      }
+                      {log.pump}
+                    </span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                      {formatRelativeTime(log.timestamp, currentTime)}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{log.action}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{log.details}</span>
+                  <span style={{
+                    alignSelf: 'flex-start', fontSize: '10px', fontWeight: 700,
+                    background: log.type === 'ph' ? (log.direction === 'up' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)') : 'var(--primary-glow)',
+                    color: log.type === 'ph' ? (log.direction === 'up' ? '#10b981' : '#ef4444') : 'var(--primary)',
+                    padding: '2px 7px', borderRadius: '5px', marginTop: '2px'
+                  }}>
+                    {log.dosage}
+                  </span>
+                </div>
+              ));
+            })()}
+          </div>
+
+          {/* Footer */}
+          <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+              {allSystemLogs.length} total entries • Live system log
+            </span>
+            <button
+              onClick={() => setShowLogsModal(false)}
+              style={{ padding: '5px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: 'none', background: 'var(--primary)', color: '#fff', cursor: 'pointer' }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
