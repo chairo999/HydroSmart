@@ -254,7 +254,7 @@ export default function SettingsTab({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
               <span className="text-secondary">Telemetry Modules</span>
-              <span style={{ fontWeight: 600 }}>INA219 Power, DHT22, pH, EC</span>
+              <span style={{ fontWeight: 600 }}>INA219 Power, DHT22, pH, TDS Nutrients</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span className="text-secondary">Power Source</span>
@@ -276,7 +276,7 @@ export default function SettingsTab({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>Dark Theme Mode</span>
-                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Enable/disable simulator color scheme</span>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Enable/disable simulator color scheme (Light Mode default)</span>
               </div>
               <label className="sim-switch">
                 <input
@@ -292,7 +292,7 @@ export default function SettingsTab({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
               <div>
                 <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>Critical Notifications</span>
-                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Get alerts for abnormal EC/pH levels</span>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>Get alerts for abnormal TDS Nutrients/pH levels</span>
               </div>
               <label className="sim-switch">
                 <input
@@ -334,7 +334,7 @@ export default function SettingsTab({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', alignItems: 'center' }}>
               <span className="text-secondary">Sensor Calibration</span>
-              <span style={{ fontWeight: 600 }}>pH: {sensors.ph} / EC: {sensors.ec}</span>
+              <span style={{ fontWeight: 600 }}>pH: {sensors.ph} / TDS Nutrients: {sensors.tds || Math.round(sensors.ec * 500)} ppm</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span className="text-secondary">System Specs & Hardware Details</span>

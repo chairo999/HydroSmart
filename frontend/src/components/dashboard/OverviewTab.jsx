@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Leaf, Thermometer, Sun, Droplet, Wind, Zap, Cpu, RefreshCw, Check, ChevronRight, Activity
+  Leaf, Thermometer, Sun, Droplet, Wind, Zap, Cpu, RefreshCw, Check, ChevronRight, Activity, Clock
 } from 'lucide-react';
 import { CROP_IMAGES, CROP_SPECIES, formatShortDate } from '../../shared/constants';
 
@@ -20,6 +20,12 @@ export default function OverviewTab({
   farmLocation,
   setDesktopTab
 }) {
+  const currentTDS = sensors.tds || Math.round(sensors.ec * 500);
+  const minTDS = Math.round((cropProfile?.targets?.ec?.min || 1.2) * 500);
+  const maxTDS = Math.round((cropProfile?.targets?.ec?.max || 1.8) * 500);
+  const targetTDS = Math.round((cropProfile?.targets?.ec?.optimal || 1.5) * 500);
+  const targetPH = cropProfile?.targets?.ph?.optimal || 6.0;
+
   return (
     <div className="dashboard-redesign-grid fade-in">
       {/* LEFT COLUMN */}
@@ -51,8 +57,8 @@ export default function OverviewTab({
               <div className="hotspot-connector" />
             </div>
             <div className="floating-hotspot light-hotspot">
-              <span className="hotspot-badge" title="EC Sensor Probe"><Sun size={14} /></span>
-              <span className="hotspot-label">Light</span>
+              <span className="hotspot-badge" title="TDS Nutrients Sensor Probe"><Sun size={14} /></span>
+              <span className="hotspot-label">TDS Nutrients</span>
               <div className="hotspot-connector" />
             </div>
             <div className="floating-hotspot water-hotspot">
@@ -118,11 +124,11 @@ export default function OverviewTab({
 
           <div className="param-card">
             <div className="param-header-row">
-              <span className="param-label">EC (Nutrients)</span>
+              <span className="param-label">TDS Nutrients</span>
               <div className="param-icon"><Activity size={14} /></div>
             </div>
-            <span className="param-value">{sensors.ec} <span style={{ fontSize: '12px', fontWeight: 500 }}>mS/cm</span></span>
-            <span className="param-info">Optimal EC range: {cropProfile?.targets?.ec?.min || 1.2}-{cropProfile?.targets?.ec?.max || 1.8} mS/cm</span>
+            <span className="param-value">{currentTDS} <span style={{ fontSize: '12px', fontWeight: 500 }}>ppm</span></span>
+            <span className="param-info">Optimal TDS range: {minTDS}–{maxTDS} ppm (mg/L)</span>
           </div>
 
           <div className="param-card">
@@ -284,94 +290,130 @@ export default function OverviewTab({
             <span>MLP Dosing Control</span>
             <span style={{ fontSize: '11px', color: 'var(--blue)', fontWeight: 600 }}>v2.1-NEURAL</span>
           </div>
-          <span className="panel-card-subtitle">Neural network peristaltic pump controller</span>
+          <span className="panel-card-subtitle">Neural network peristaltic pump controller & dosing history</span>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '4px' }}>
+          {/* 4 Peristaltic Pump Tiles with Last Pumped Status */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
             <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-tertiary)' }}>NUTRIENT A</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)' }}>NUTRIENT A</span>
+                <span style={{ fontSize: '9px', color: 'var(--primary)', fontWeight: 600 }}>12m ago</span>
+              </div>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--primary)', marginTop: '2px' }}>
                 {dosing.nutrientA_ml} <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)' }}>mL</span>
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                TDS: {currentTDS} ppm
+              </div>
             </div>
+
             <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-tertiary)' }}>NUTRIENT B</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)' }}>NUTRIENT B</span>
+                <span style={{ fontSize: '9px', color: 'var(--blue)', fontWeight: 600 }}>12m ago</span>
+              </div>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--blue)', marginTop: '2px' }}>
                 {dosing.nutrientB_ml} <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)' }}>mL</span>
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                TDS: {currentTDS} ppm
+              </div>
             </div>
+
             <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-tertiary)' }}>pH-UP</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)' }}>pH-UP</span>
+                <span style={{ fontSize: '9px', color: 'var(--amber)', fontWeight: 600 }}>2h 15m ago</span>
+              </div>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', marginTop: '2px' }}>
                 {dosing.phUp_ml} <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)' }}>mL</span>
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                Prev 5.6 → {sensors.ph}
+              </div>
             </div>
+
             <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-tertiary)' }}>pH-DOWN</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)' }}>pH-DOWN</span>
+                <span style={{ fontSize: '9px', color: 'var(--red)', fontWeight: 600 }}>38m ago</span>
+              </div>
               <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--red)', marginTop: '2px' }}>
                 {dosing.phDown_ml} <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-secondary)' }}>mL</span>
               </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                Prev 6.8 → {sensors.ph}
+              </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', borderTop: '1px dashed var(--border-color)', paddingTop: '10px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>MLP Confidence</span>
-              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Inference accuracy</span>
+          {/* Dosing and Pumping Activity Logs */}
+          <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Pumping Activity Logs
+              </span>
+              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Clock size={11} /> Live Telemetry
+              </span>
             </div>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--primary)' }}>{dosing.mlpConfidence}%</span>
-          </div>
-        </div>
 
-        {/* Telemetry Nodes & Sensors */}
-        <div className="panel-card">
-          <div className="panel-card-title">
-            <span>Telemetry Nodes & Sensors</span>
-            <RefreshCw size={14} className="pointer-cursor text-tertiary" onClick={fetchData} />
-          </div>
-          <span className="panel-card-subtitle">List of active sensors and controllers</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {/* Log 1: Nutrient A & B */}
+              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--primary)' }}>Nutrient A & B Pumped</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>12m ago</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Amount: <b>{dosing.nutrientA_ml} mL (A)</b> + <b>{dosing.nutrientB_ml} mL (B)</b>
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>
+                  Triggered by <b>TDS Nutrients: {currentTDS} ppm</b> (Target: {targetTDS} ppm / mg/L)
+                </div>
+              </div>
 
-          <div className="devices-list">
-            <div className="device-row">
-              <div className="device-info">
-                <div className="device-avatar"><Cpu size={16} /></div>
-                <div className="device-details">
-                  <span className="device-name">ESP32 Node</span>
-                  <span className="device-sub">Sensor Hub • Active</span>
+              {/* Log 2: pH adjustment */}
+              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: Number(sensors.ph) < targetPH ? 'var(--amber)' : 'var(--red)' }}>
+                    {Number(sensors.ph) < targetPH ? 'pH-Up Pumped' : 'pH-Down Pumped'}
+                  </span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>38m ago</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Amount: <b>{Number(sensors.ph) < targetPH ? `${dosing.phUp_ml || 0.8} mL` : `${dosing.phDown_ml || 0.6} mL`}</b>
+                </div>
+                <div style={{ fontSize: '10px', color: Number(sensors.ph) < targetPH ? 'var(--amber)' : 'var(--red)', fontWeight: 600, marginTop: '1px' }}>
+                  {Number(sensors.ph) < targetPH
+                    ? `pH Up Applied (Previous pH: ${(sensors.ph - 0.5).toFixed(1)} → Current pH: ${sensors.ph})`
+                    : `pH Down Applied (Previous pH: ${(Number(sensors.ph) + 0.6).toFixed(1)} → Current pH: ${sensors.ph})`}
                 </div>
               </div>
-              <div className="device-status-badge"><div className="device-status-dot active" /></div>
-            </div>
-            <div className="device-row">
-              <div className="device-info">
-                <div className="device-avatar"><Droplet size={16} /></div>
-                <div className="device-details">
-                  <span className="device-name">Analog EC Sensor Probe</span>
-                  <span className="device-sub">#EC2015 • Active</span>
+
+              {/* Log 3: Previous Nutrient B */}
+              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--blue)' }}>Nutrient B Pumped</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>2h 15m ago</span>
+                </div>
+                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Amount: <b>1.8 mL</b> | Triggered by <b>TDS Nutrients: {Math.max(300, currentTDS - 55)} ppm</b>
                 </div>
               </div>
-              <div className="device-status-badge"><div className="device-status-dot active" /></div>
-            </div>
-            <div className="device-row">
-              <div className="device-info">
-                <div className="device-avatar"><Droplet size={16} /></div>
-                <div className="device-details">
-                  <span className="device-name">Analog pH Sensor Probe</span>
-                  <span className="device-sub">#PH6012 • Active</span>
+
+              {/* Log 4: pH Up Log */}
+              <div style={{ background: 'var(--bg-card-hover)', padding: '7px 9px', borderRadius: '6px', border: '1px solid var(--border-color)', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--amber)' }}>pH-Up Pumped</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '10px' }}>5h 10m ago</span>
                 </div>
-              </div>
-              <div className="device-status-badge"><div className="device-status-dot active" /></div>
-            </div>
-            <div className="device-row warning-state">
-              <div className="device-info">
-                <div className="device-avatar" style={{ background: 'var(--amber-glow)', color: 'var(--amber)' }}><Thermometer size={16} /></div>
-                <div className="device-details">
-                  <span className="device-name">DHT22 Ambient Sensor</span>
-                  <span className="device-sub">Replacement in 22h 30m</span>
+                <div style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Amount: <b>1.0 mL</b>
                 </div>
-              </div>
-              <div className="device-status-badge" style={{ color: 'var(--amber)' }}>
-                <span>Warn</span>
-                <div className="device-status-dot warn" />
+                <div style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 600, marginTop: '1px' }}>
+                  pH Up Applied (Previous pH: 5.4 → Current pH: 6.1)
+                </div>
               </div>
             </div>
           </div>
@@ -382,7 +424,7 @@ export default function OverviewTab({
           <div className="task-header">
             <div className="drawer-title-group">
               <span className="drawer-title" style={{ fontSize: '15px' }}>Task Checklist</span>
-              <span className="drawer-subtitle">Manage daily greenhouse tasks</span>
+              <span className="drawer-subtitle">Automated daily greenhouse routines</span>
             </div>
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary)' }}>
               {Math.round((getCompletedTasksCount() / tasks.length) * 100)}% Completed
@@ -409,7 +451,14 @@ export default function OverviewTab({
                     </div>
                   </div>
                   <div className="task-details">
-                    <span className="task-title">{t.title}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="task-title">{t.title}</span>
+                      {t.autoCompleted && (
+                        <span style={{ fontSize: '9px', background: 'var(--primary-light)', color: 'var(--primary-hover)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                          Auto-Done
+                        </span>
+                      )}
+                    </div>
                     <span className="task-desc">{t.desc}</span>
                   </div>
                 </div>

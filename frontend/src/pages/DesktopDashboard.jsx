@@ -56,7 +56,34 @@ export default function DesktopDashboard() {
   const [manualTimeLeft, setManualTimeLeft] = useState(0);
   const [criticalAlerts, setCriticalAlerts] = useState(true);
   const [energySaver, setEnergySaver] = useState(false);
-  const [dashboardTheme, setDashboardTheme] = useState('dark');
+  const [dashboardTheme, setDashboardTheme] = useState(() => {
+    return localStorage.getItem('hydrosmart_theme') || 'light';
+  });
+
+  const handleThemeChange = (newTheme) => {
+    setDashboardTheme(newTheme);
+    localStorage.setItem('hydrosmart_theme', newTheme);
+  };
+
+  // --- Dynamic Greenhouse Sections State (User Editable) ---
+  const [greenhouseSections, setGreenhouseSections] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hydrosmart_greenhouse_sections');
+      return saved ? JSON.parse(saved) : GREENHOUSE_SECTIONS;
+    } catch (e) {
+      return GREENHOUSE_SECTIONS;
+    }
+  });
+
+  const updateGreenhouseSection = (id, updatedFields) => {
+    setGreenhouseSections(prev => {
+      const next = prev.map(s => s.id === id ? { ...s, ...updatedFields } : s);
+      try {
+        localStorage.setItem('hydrosmart_greenhouse_sections', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   // --- Editable Owner Info States ---
   const [ownerName, setOwnerName] = useState(' Rene Baterbonia');
@@ -76,13 +103,62 @@ export default function DesktopDashboard() {
   // Dynamic Clock
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Task checklist state
-  const [tasks, setTasks] = useState([
-    { id: 1, title: 'pH Probe Calibration', desc: 'Recalibrate sensor using pH 4.01 and 7.00 solutions', time: '07:00 AM - 07:30 AM', completed: false },
-    { id: 2, title: 'Fertilizing', desc: 'Apply organic fertilizer to base of plants. Quantity: 50g per plant', time: '08:00 AM - 08:30 AM', completed: true },
-    { id: 3, title: 'Plant Inspection', desc: 'Check leaves for any signs of pests or yellowing', time: '10:00 AM - 11:00 AM', completed: false },
-    { id: 4, title: 'Soil Aeration', desc: 'Loosen soil around the roots', time: '02:00 PM - 03:00 PM', completed: false }
-  ]);
+  // Helper to determine if task scheduled time has passed
+  const checkIsTaskTimePassed = (timeStr, now = new Date()) => {
+    if (!timeStr) return false;
+    try {
+      const parts = timeStr.split('-');
+      const endStr = (parts[parts.length - 1] || parts[0]).trim();
+      const match = endStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return false;
+      let [_, hStr, mStr, meridiem] = match;
+      let hours = parseInt(hStr, 10);
+      const minutes = parseInt(mStr, 10);
+      if (meridiem.toUpperCase() === 'PM' && hours < 12) hours += 12;
+      if (meridiem.toUpperCase() === 'AM' && hours === 12) hours = 0;
+
+      const targetTime = new Date(now);
+      targetTime.setHours(hours, minutes, 0, 0);
+      return now.getTime() >= targetTime.getTime();
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Initial Task checklist state (with auto-completed check)
+  const [tasks, setTasks] = useState(() => {
+    const initialList = [
+      { id: 1, title: 'pH Probe Calibration', desc: 'Recalibrate sensor using pH 4.01 and 7.00 solutions', time: '07:00 AM - 07:30 AM', completed: false },
+      { id: 2, title: 'Fertilizing', desc: 'Apply organic fertilizer to base of plants. Quantity: 50g per plant', time: '08:00 AM - 08:30 AM', completed: true },
+      { id: 3, title: 'Plant Inspection', desc: 'Check leaves for any signs of pests or yellowing', time: '10:00 AM - 11:00 AM', completed: false },
+      { id: 4, title: 'Soil Aeration', desc: 'Loosen soil around the roots', time: '02:00 PM - 03:00 PM', completed: false }
+    ];
+    const now = new Date();
+    return initialList.map(task => {
+      const passed = checkIsTaskTimePassed(task.time, now);
+      return {
+        ...task,
+        completed: passed ? true : task.completed,
+        autoCompleted: passed
+      };
+    });
+  });
+
+  // Automatically update and check off completed tasks as time passes
+  useEffect(() => {
+    setTasks(prevTasks => {
+      let changed = false;
+      const nextTasks = prevTasks.map(t => {
+        const passed = checkIsTaskTimePassed(t.time, currentTime);
+        if (passed && !t.completed) {
+          changed = true;
+          return { ...t, completed: true, autoCompleted: true };
+        }
+        return t;
+      });
+      return changed ? nextTasks : prevTasks;
+    });
+  }, [currentTime]);
 
   // --- Clock Trigger ---
   useEffect(() => {
@@ -257,16 +333,19 @@ export default function DesktopDashboard() {
 
   const getSectionSensors = (sectionId) => {
     const seed = sectionId * 1.5;
+    const ecVal = +(sensors.ec + (Math.cos(seed) * 0.1)).toFixed(2);
+    const tdsVal = Math.round(ecVal * 500);
     return {
       ph: +(sensors.ph + (Math.sin(seed) * 0.15)).toFixed(1),
-      ec: +(sensors.ec + (Math.cos(seed) * 0.1)).toFixed(2),
+      ec: ecVal,
+      tds: tdsVal,
       humidity: Math.round(sensors.humidity + (Math.cos(seed) * 4)),
       waterLevel: Math.round(sensors.waterLevel + (Math.sin(seed * 2) * 3)),
       temperature: +(sensors.waterTemp + (Math.cos(seed * 1.5) * 1.2)).toFixed(1)
     };
   };
 
-  const activeSectionData = GREENHOUSE_SECTIONS.find(s => s.id === activeSectionId);
+  const activeSectionData = greenhouseSections.find(s => s.id === activeSectionId) || greenhouseSections[0];
   const activeSectionSensors = activeSectionData ? getSectionSensors(activeSectionData.id) : null;
 
   return (
@@ -361,6 +440,9 @@ export default function DesktopDashboard() {
               activeSectionData={activeSectionData}
               activeSectionSensors={activeSectionSensors}
               getSectionHealthColor={getSectionHealthColor}
+              greenhouseSections={greenhouseSections}
+              updateGreenhouseSection={updateGreenhouseSection}
+              setGreenhouseSections={setGreenhouseSections}
             />
           )}
 
@@ -416,7 +498,7 @@ export default function DesktopDashboard() {
               farmLocation={farmLocation}
               setFarmLocation={setFarmLocation}
               dashboardTheme={dashboardTheme}
-              setDashboardTheme={setDashboardTheme}
+              setDashboardTheme={handleThemeChange}
               criticalAlerts={criticalAlerts}
               setCriticalAlerts={setCriticalAlerts}
               energySaver={energySaver}

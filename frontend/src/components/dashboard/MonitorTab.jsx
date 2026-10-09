@@ -87,9 +87,9 @@ export default function MonitorTab({
           </div>
 
           <div className="drawer-stat-row" style={{ padding: '6px 0' }}>
-            <span className="drawer-stat-label">EC Target (Optimal)</span>
+            <span className="drawer-stat-label">TDS Nutrients Target (Optimal)</span>
             <span className="drawer-stat-value" style={{ color: 'var(--blue)' }}>
-              {cropProfile?.targets?.ec?.optimal || 1.5} mS/cm
+              {Math.round((cropProfile?.targets?.ec?.optimal || 1.5) * 500)} ppm (mg/L)
             </span>
           </div>
 

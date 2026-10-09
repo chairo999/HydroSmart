@@ -18,6 +18,7 @@ const cropProfiles = {
     targets: { 
       ph: { min: 5.5, max: 6.5, optimal: 6.0 }, 
       ec: { min: 1.2, max: 1.8, optimal: 1.5 }, // EC in mS/cm
+      tds: { min: 600, max: 900, optimal: 750 }, // TDS Nutrients in ppm (mg/L)
       temp: { min: 18, max: 24, optimal: 21 }, 
       humidity: { min: 50, max: 70, optimal: 60 } 
     },
@@ -28,6 +29,7 @@ const cropProfiles = {
     targets: { 
       ph: { min: 6.0, max: 7.0, optimal: 6.5 }, 
       ec: { min: 1.5, max: 2.0, optimal: 1.8 }, // EC in mS/cm
+      tds: { min: 750, max: 1000, optimal: 900 }, // TDS Nutrients in ppm (mg/L)
       temp: { min: 20, max: 30, optimal: 25 }, 
       humidity: { min: 60, max: 80, optimal: 70 } 
     },
@@ -38,6 +40,7 @@ const cropProfiles = {
     targets: { 
       ph: { min: 5.5, max: 6.6, optimal: 6.0 }, 
       ec: { min: 1.8, max: 2.3, optimal: 2.1 }, // EC in mS/cm
+      tds: { min: 900, max: 1150, optimal: 1050 }, // TDS Nutrients in ppm (mg/L)
       temp: { min: 15, max: 24, optimal: 20 }, 
       humidity: { min: 45, max: 65, optimal: 55 } 
     },
@@ -49,10 +52,11 @@ const cropProfiles = {
 let activeCrop = 'lettuce';
 let activeStage = 'Vegetative';
 
-// --- Sensor Telemetry (Re-based on Thesis Sensors: DHT22, DS18B20, pH, EC, Ultrasonic) ---
+// --- Sensor Telemetry (Re-based on Thesis Sensors: DHT22, DS18B20, pH, TDS/EC, Ultrasonic) ---
 let sensors = {
   ph: 6.2,            // Analog pH Sensor
   ec: 1.5,            // Analog EC Sensor (mS/cm)
+  tds: 750,           // TDS Nutrients (ppm / mg/L)
   waterTemp: 21.5,    // DS18B20 Water Temperature
   airTemp: 24.5,      // DHT22 Air Temperature
   humidity: 62.0,     // DHT22 Humidity
@@ -133,6 +137,7 @@ setInterval(() => {
   // Sensor fluctuation
   sensors.ph = +Math.max(4.5, Math.min(8.5, sensors.ph + (Math.random() - 0.5) * 0.04)).toFixed(2);
   sensors.ec = +Math.max(0.4, Math.min(3.2, sensors.ec + (Math.random() - 0.5) * 0.03)).toFixed(2);
+  sensors.tds = Math.round(sensors.ec * 500);
   sensors.waterTemp = +Math.max(15, Math.min(35, sensors.waterTemp + (Math.random() - 0.5) * 0.1)).toFixed(1);
   sensors.airTemp = +Math.max(15, Math.min(38, sensors.airTemp + (Math.random() - 0.5) * 0.15)).toFixed(1);
   sensors.humidity = +Math.max(30, Math.min(95, sensors.humidity + (Math.random() - 0.5) * 0.8)).toFixed(1);
