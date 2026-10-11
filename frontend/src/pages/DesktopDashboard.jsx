@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Home, Compass, Cpu, Activity, Settings } from 'lucide-react';
 import { GREENHOUSE_SECTIONS } from '../shared/constants';
 import {
-  USE_FIREBASE, getTelemetryFromFirebase, updateOverrideInFirebase, selectCropInFirebase
+  isFirebaseEnabled, getTelemetryFromFirebase, updateOverrideInFirebase, selectCropInFirebase
 } from '../shared/firebaseService';
 
 // Import Tab Components
@@ -13,9 +13,10 @@ import GrowthTab from '../components/dashboard/GrowthTab';
 import SettingsTab from '../components/dashboard/SettingsTab';
 
 const fallbackCropProfiles = {
-  lettuce: { phMin: 5.5, phMax: 6.5, ecMin: 1.2, ecMax: 1.8, tempMin: 18, tempMax: 24, ratioA: 2.0, ratioB: 2.0 },
-  pechay: { phMin: 6.0, phMax: 7.0, ecMin: 1.5, ecMax: 2.5, tempMin: 20, tempMax: 30, ratioA: 2.5, ratioB: 2.5 },
-  spinach: { phMin: 6.0, phMax: 6.8, ecMin: 1.8, ecMax: 2.3, tempMin: 15, tempMax: 20, ratioA: 1.8, ratioB: 1.8 }
+  lettuce: { phMin: 5.5, phMax: 6.5, ecMin: 1.2, ecMax: 1.8, tempMin: 18, tempMax: 24, ratioA: 2.0, ratioB: 2.0, maturityDays: 30 },
+  pechay: { phMin: 6.0, phMax: 7.0, ecMin: 1.5, ecMax: 2.5, tempMin: 20, tempMax: 30, ratioA: 2.5, ratioB: 2.5, maturityDays: 25 },
+  spinach: { phMin: 6.0, phMax: 6.8, ecMin: 1.8, ecMax: 2.3, tempMin: 15, tempMax: 20, ratioA: 1.8, ratioB: 1.8, maturityDays: 35 },
+  basil: { phMin: 5.5, phMax: 6.5, ecMin: 1.0, ecMax: 1.6, tempMin: 20, tempMax: 28, ratioA: 1.8, ratioB: 1.8, maturityDays: 35 }
 };
 
 export default function DesktopDashboard() {
@@ -169,14 +170,19 @@ export default function DesktopDashboard() {
   // --- API Polling ---
   const fetchData = useCallback(async () => {
     try {
-      let data;
-      if (USE_FIREBASE) {
+      let data = null;
+      if (isFirebaseEnabled()) {
         data = await getTelemetryFromFirebase();
-        if (!data) throw new Error("Could not retrieve telemetry from Firebase Realtime Database");
-      } else {
-        const res = await fetch('/api/telemetry');
-        data = await res.json();
       }
+      if (!data) {
+        // Fallback to local API simulator so dashboard remains responsive
+        const res = await fetch('/api/telemetry');
+        if (res.ok) {
+          data = await res.json();
+        }
+      }
+      if (!data) throw new Error("Could not retrieve telemetry");
+
       setSensors(data.sensors);
       setEnergy(data.energy);
       setDosing(data.dosing);
@@ -200,15 +206,14 @@ export default function DesktopDashboard() {
   // --- API Interactive Actions ---
   const selectCrop = async (crop) => {
     try {
-      if (USE_FIREBASE) {
+      if (isFirebaseEnabled()) {
         await selectCropInFirebase(crop, activeStage);
-      } else {
-        await fetch('/api/crop-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ crop, stage: activeStage })
-        });
       }
+      await fetch('/api/crop-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crop, stage: activeStage })
+      });
       setActiveCrop(crop);
     } catch (e) { /* swallow */ }
   };
@@ -358,10 +363,6 @@ export default function DesktopDashboard() {
         </div>
 
         <div className="header-right">
-          <div className="system-status-indicator">
-            <div className="status-indicator-dot" />
-            <span>{connected ? 'ONLINE' : 'OFFLINE'}</span>
-          </div>
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
             {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
           </span>
@@ -429,6 +430,8 @@ export default function DesktopDashboard() {
               currentTime={currentTime}
               farmLocation={farmLocation}
               setDesktopTab={setDesktopTab}
+              greenhouseSections={greenhouseSections}
+              updateGreenhouseSection={updateGreenhouseSection}
             />
           )}
 
@@ -449,6 +452,8 @@ export default function DesktopDashboard() {
           {/* VIEW: MONITOR TAB */}
           {desktopTab === 'monitor' && (
             <MonitorTab
+              sensors={sensors}
+              overrides={overrides}
               selectedCropTab={selectedCropTab}
               setSelectedCropTab={setSelectedCropTab}
               selectCrop={selectCrop}
@@ -468,6 +473,7 @@ export default function DesktopDashboard() {
               manualTimeLeft={manualTimeLeft}
               triggerManualWater={triggerManualWater}
               getNextWateringText={getNextWateringText}
+              greenhouseSections={greenhouseSections}
             />
           )}
 
@@ -475,8 +481,11 @@ export default function DesktopDashboard() {
           {desktopTab === 'growth' && (
             <GrowthTab
               selectedCropTab={selectedCropTab}
+              setSelectedCropTab={setSelectedCropTab}
               activeStage={activeStage}
               cropProfile={cropProfile}
+              greenhouseSections={greenhouseSections}
+              updateGreenhouseSection={updateGreenhouseSection}
             />
           )}
 

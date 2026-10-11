@@ -45,6 +45,17 @@ const cropProfiles = {
       humidity: { min: 45, max: 65, optimal: 55 } 
     },
     stages: ['Seedling', 'Vegetative', 'Harvest']
+  },
+  basil: {
+    name: 'Basil',
+    targets: {
+      ph: { min: 5.5, max: 6.5, optimal: 6.0 },
+      ec: { min: 1.0, max: 1.6, optimal: 1.4 },
+      tds: { min: 500, max: 800, optimal: 700 },
+      temp: { min: 20, max: 28, optimal: 24 },
+      humidity: { min: 50, max: 70, optimal: 60 }
+    },
+    stages: ['Seedling', 'Vegetative', 'Harvest']
   }
 };
 
