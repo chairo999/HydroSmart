@@ -51,8 +51,7 @@ export async function getTelemetryFromFirebase() {
  * Update a physical hardware override relay state in Firebase
  */
 export async function updateOverrideInFirebase(device, state) {
-  if (!isFiS
-    rebaseEnabled()) return { success: true };
+  if (!isFirebaseEnabled()) return { success: true };
   const dbUrl = getFirebaseUrl().replace(/\/$/, "");
   try {
     const response = await fetch(`${dbUrl}/telemetry/overrides.json`, {
