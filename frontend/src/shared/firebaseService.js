@@ -10,13 +10,85 @@ export function getFirebaseUrl() {
   return localStorage.getItem('hydrosmart_firebase_url') || DEFAULT_FIREBASE_DB_URL;
 }
 
+export function setFirebaseUrl(url) {
+  try {
+    localStorage.setItem('hydrosmart_firebase_url', url);
+  } catch (e) {}
+}
+
 export function isFirebaseEnabled() {
   const stored = localStorage.getItem('hydrosmart_use_firebase');
-  // Enabled by default if user desires, or can be toggled
-  return stored !== null ? stored === 'true' : true;
+  // Disabled by default unless explicitly configured, so local simulator works seamlessly
+  return stored !== null ? stored === 'true' : false;
+}
+
+export function setFirebaseEnabled(enabled) {
+  try {
+    localStorage.setItem('hydrosmart_use_firebase', String(enabled));
+  } catch (e) {}
 }
 
 export const USE_FIREBASE = isFirebaseEnabled();
+
+/**
+ * Seed initial baseline telemetry tree to Firebase Realtime Database
+ */
+export async function seedFirebaseData(customUrl) {
+  const dbUrl = (customUrl || getFirebaseUrl()).replace(/\/$/, "");
+  const payload = {
+    sensors: {
+      ph: 6.2,
+      ec: 1.5,
+      tds: 750,
+      waterTemp: 22.0,
+      airTemp: 26.5,
+      humidity: 64,
+      waterLevel: 82
+    },
+    energy: {
+      batterySoC: 84,
+      solarVoltage: 18.2,
+      solarCurrent: 1450,
+      solarPower: 26.4,
+      loadVoltage: 12.0,
+      loadCurrent: 820,
+      loadPower: 9.8,
+      gridActive: false,
+      chargingState: "solar",
+      loadShedding: false,
+      ina219: { busVoltage: 12.0, current: 820, power: 9.8, energyToday: 0.145 }
+    },
+    dosing: {
+      nutrientA_ml: 2.4,
+      nutrientB_ml: 1.8,
+      phUp_ml: 0.0,
+      phDown_ml: 0.5,
+      mlpConfidence: 95.1,
+      lastInference: new Date().toISOString(),
+      manualOverride: false
+    },
+    overrides: {
+      waterPump: true,
+      growLights: true,
+      exhaustFan: false,
+      dosingPumps: true
+    },
+    activeCrop: "lettuce",
+    activeStage: "Vegetative"
+  };
+
+  try {
+    const res = await fetch(`${dbUrl}/telemetry.json`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    return { ok: true, data: payload };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
 
 /**
  * Fetch the complete live telemetry payload from Firebase Realtime Database
