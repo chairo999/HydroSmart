@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { Database, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Send, Wifi, ShieldAlert } from 'lucide-react';
+import { Database, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Send, Wifi, ShieldAlert, Cpu } from 'lucide-react';
 import {
   getFirebaseUrl, setFirebaseUrl, isFirebaseEnabled, setFirebaseEnabled,
   testFirebaseConnection, seedFirebaseData, DEFAULT_FIREBASE_DB_URL
 } from '../../shared/firebaseService';
+
+// The 5 primary sensors in the NFT system
+const PRIMARY_SENSORS = [
+  { key: 'ph',        label: 'pH Sensor',            hardware: 'Analog pH Probe + ADC',       unit: '',    icon: '🧪' },
+  { key: 'tds',       label: 'TDS Nutrient Sensor',  hardware: 'TDS Probe (EC-to-TDS)',       unit: 'ppm', icon: '💧' },
+  { key: 'waterTemp', label: 'Water Temperature',    hardware: 'DS18B20 Waterproof Probe',    unit: '°C',  icon: '🌡️' },
+  { key: 'airTemp',   label: 'Air Temp / Humidity',  hardware: 'DHT22 Ambient Sensor',        unit: '',    icon: '🌬️' },
+  { key: 'waterLevel',label: 'Water Level',          hardware: 'HC-SR04 Ultrasonic Sensor',  unit: '%',   icon: '📊' }
+];
 
 export default function SettingsTab({
   ownerName,
@@ -35,6 +44,39 @@ export default function SettingsTab({
   const [isTestingFb, setIsTestingFb] = useState(false);
   const [isSeedingFb, setIsSeedingFb] = useState(false);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
+
+  // Per-sensor calibration tracking
+  const [calibrationDates, setCalibrationDates] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hydrosmart_calibration_dates');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { ph: null, tds: null, waterTemp: null, airTemp: null, waterLevel: null };
+  });
+
+  // Per-sensor reference values for error % calculation
+  const [referenceValues, setReferenceValues] = useState({ ph: '', tds: '', waterTemp: '', airTemp: '', waterLevel: '' });
+
+  const markCalibrated = (sensorKey) => {
+    const updated = { ...calibrationDates, [sensorKey]: new Date().toISOString() };
+    setCalibrationDates(updated);
+    try { localStorage.setItem('hydrosmart_calibration_dates', JSON.stringify(updated)); } catch (e) {}
+  };
+
+  const getCalibrationErrorPct = (sensorKey) => {
+    const refStr = referenceValues[sensorKey];
+    if (!refStr || refStr.trim() === '') return null;
+    const ref = parseFloat(refStr);
+    if (isNaN(ref) || ref === 0) return null;
+    let measured = null;
+    if (sensorKey === 'ph') measured = parseFloat(sensors?.ph);
+    else if (sensorKey === 'tds') measured = parseFloat(sensors?.tds ?? Math.round((sensors?.ec ?? 1.5) * 500));
+    else if (sensorKey === 'waterTemp') measured = parseFloat(sensors?.waterTemp);
+    else if (sensorKey === 'airTemp') measured = parseFloat(sensors?.airTemp);
+    else if (sensorKey === 'waterLevel') measured = parseFloat(sensors?.waterLevel);
+    if (isNaN(measured) || measured === null) return null;
+    return (Math.abs(measured - ref) / Math.abs(ref) * 100).toFixed(2);
+  };
 
   const handleToggleFirebase = (enabled) => {
     setFbEnabled(enabled);
@@ -284,37 +326,44 @@ export default function SettingsTab({
           </div>
         </div>
 
-        {/* NFT Hardware specs */}
+        {/* NFT Hardware specs — Primary Sensors Only */}
         <div className="panel-card" style={{ gap: '16px' }}>
-          <div className="panel-card-title">NFT Hydroponics Setup Configuration</div>
-          <span className="panel-card-subtitle">Live hardware telemetry details</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+            <Cpu size={15} style={{ color: 'var(--primary)' }} />
+            <div className="panel-card-title">NFT Hydroponics Setup</div>
+          </div>
+          <span className="panel-card-subtitle">Primary sensor hardware and live telemetry</span>
 
-          <div style={{ width: '100%', height: '140px', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ width: '100%', height: '100px', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
             <img src="/images/hydro-system.jpg" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Hydroponics System Rig" />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.7))' }} />
-            <div style={{ position: 'absolute', bottom: '12px', left: '16px', color: 'white' }}>
-              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700 }}>Block A - NFT System</h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '11px', opacity: 0.8 }}>Active smart hydroponics channels</p>
+            <div style={{ position: 'absolute', bottom: '10px', left: '14px', color: 'white' }}>
+              <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Block A — NFT System</h4>
+              <p style={{ margin: '2px 0 0 0', fontSize: '10px', opacity: 0.8 }}>Raspberry Pi Zero 2W · ESP32-WROOM-32D</p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-              <span className="text-secondary">Main Controller</span>
-              <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>Raspberry Pi Zero 2 W</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-              <span className="text-secondary">Sensor Node</span>
-              <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>ESP32-WROOM-32D</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-              <span className="text-secondary">Telemetry Modules</span>
-              <span style={{ fontWeight: 600 }}>INA219 Power, DHT22, pH, TDS Nutrients</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span className="text-secondary">Power Source</span>
-              <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Solar-Grid Hybrid</span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+            {PRIMARY_SENSORS.map((s, i) => {
+              let liveVal = '—';
+              if (s.key === 'ph') liveVal = sensors?.ph ?? '—';
+              else if (s.key === 'tds') liveVal = `${sensors?.tds ?? Math.round((sensors?.ec ?? 1.5) * 500)} ppm`;
+              else if (s.key === 'waterTemp') liveVal = sensors?.waterTemp != null ? `${sensors.waterTemp}°C` : '—';
+              else if (s.key === 'airTemp') liveVal = (sensors?.airTemp != null && sensors?.humidity != null) ? `${sensors.airTemp}°C / ${sensors.humidity}%` : '—';
+              else if (s.key === 'waterLevel') liveVal = sensors?.waterLevel != null ? `${sensors.waterLevel}%` : '—';
+              return (
+                <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < PRIMARY_SENSORS.length - 1 ? '1px solid var(--border-color)' : 'none', fontSize: '12px', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '15px' }}>{s.icon}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{s.hardware}</div>
+                    </div>
+                  </div>
+                  <span style={{ fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap', flexShrink: 0 }}>{liveVal}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

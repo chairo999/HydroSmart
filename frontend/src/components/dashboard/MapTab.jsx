@@ -35,8 +35,8 @@ export default function MapTab({
     area: '25 m²',
     lastWatered: '19/09/2024',
     fertPlanned: '20/09/2024 - Hi-Fos',
-    centralHub: 'Pi Zero 2 W',
-    sensorNode: 'ESP32',
+    plantedDate: '',
+    stage: 'Seedling',
     x: 50,
     y: 50
   });
@@ -75,8 +75,8 @@ export default function MapTab({
       area: activeSectionData.area,
       lastWatered: activeSectionData.lastWatered || '19/09/2024',
       fertPlanned: activeSectionData.fertPlanned || '20/09/2024 - Hi-Fos',
-      centralHub: activeSectionData.centralHub || 'Pi Zero 2 W',
-      sensorNode: activeSectionData.sensorNode || 'ESP32',
+      plantedDate: activeSectionData.plantedDate || '',
+      stage: activeSectionData.stage || 'Seedling',
       x: activeSectionData.x ?? 50,
       y: activeSectionData.y ?? 50
     });
@@ -93,8 +93,8 @@ export default function MapTab({
         area: editForm.area,
         lastWatered: editForm.lastWatered,
         fertPlanned: editForm.fertPlanned,
-        centralHub: editForm.centralHub,
-        sensorNode: editForm.sensorNode,
+        plantedDate: editForm.plantedDate,
+        stage: editForm.stage,
         x: Number(editForm.x),
         y: Number(editForm.y)
       });
@@ -608,6 +608,30 @@ export default function MapTab({
                   />
                 </div>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Planting Date</span>
+                  <input
+                    type="date"
+                    value={editForm.plantedDate}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, plantedDate: e.target.value }))}
+                    style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-panel)', color: 'var(--text-main)', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Growth Stage</span>
+                  <select
+                    value={editForm.stage}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, stage: e.target.value }))}
+                    style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-panel)', color: 'var(--text-main)', outline: 'none' }}
+                  >
+                    <option value="Seedling">Seedling</option>
+                    <option value="Vegetative">Vegetative</option>
+                    <option value="Flowering">Flowering</option>
+                    <option value="Harvest Ready">Harvest Ready</option>
+                  </select>
+                </div>
+
                 <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                   <button
                     onClick={handleSaveSection}
@@ -691,22 +715,26 @@ export default function MapTab({
                   </div>
                 </div>
 
-                {/* Hardware details */}
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '6px' }}>
-                  <h4 style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    System Nodes
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Central Hub</span>
-                      <span style={{ fontFamily: 'var(--font-mono)' }}>{activeSectionData.centralHub || 'Pi Zero 2 W'}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span>Sensor Node</span>
-                      <span style={{ fontFamily: 'var(--font-mono)' }}>{activeSectionData.sensorNode || 'ESP32'}</span>
+                {/* Planting Info */}
+                {activeSectionData.plantedDate && (
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', marginTop: '6px' }}>
+                    <h4 style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      Growing Schedule
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Planted Date</span>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                          {new Date(activeSectionData.plantedDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Growth Stage</span>
+                        <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{activeSectionData.stage || 'Seedling'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>
