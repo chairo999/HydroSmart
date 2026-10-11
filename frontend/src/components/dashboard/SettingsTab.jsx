@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Send, Wifi, ShieldAlert, Cpu } from 'lucide-react';
+import { Database, CheckCircle2, AlertCircle, RefreshCw, ExternalLink, Send, Wifi, ShieldAlert, Cpu, Edit3, Check } from 'lucide-react';
 import {
   getFirebaseUrl, setFirebaseUrl, isFirebaseEnabled, setFirebaseEnabled,
   testFirebaseConnection, seedFirebaseData, DEFAULT_FIREBASE_DB_URL
@@ -305,22 +305,63 @@ export default function SettingsTab({
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            borderTop: '1px solid var(--border-color)',
+            paddingTop: '16px',
+            marginTop: '8px'
+          }}>
             {!isEditingOwner ? (
               <button
+                type="button"
                 onClick={() => setIsEditingOwner(true)}
                 className="sim-btn"
-                style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '15px' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border-color)',
+                  boxShadow: 'var(--shadow-sm)',
+                  cursor: 'pointer',
+                  minHeight: '38px',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                Edit Profile
+                <Edit3 size={14} style={{ color: 'var(--primary)' }} />
+                <span>Edit Profile</span>
               </button>
             ) : (
               <button
+                type="button"
                 onClick={() => setIsEditingOwner(false)}
                 className="sim-btn"
-                style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '15px', background: 'var(--primary)', color: 'white', borderColor: 'var(--primary)' }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  padding: '8px 18px',
+                  borderRadius: '10px',
+                  background: 'var(--primary)',
+                  color: '#ffffff',
+                  border: '1px solid var(--primary)',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
+                  cursor: 'pointer',
+                  minHeight: '38px',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                Save Profile
+                <Check size={14} />
+                <span>Save Profile</span>
               </button>
             )}
           </div>

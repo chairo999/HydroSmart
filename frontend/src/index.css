@@ -486,6 +486,7 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  width: 100%;
 }
 
 .param-card {
@@ -495,6 +496,8 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  min-height: 104px;
   gap: 8px;
   transition: all var(--transition-fast);
 }

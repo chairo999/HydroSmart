@@ -434,7 +434,7 @@ export default function OverviewTab({
           </div>
 
           {/* 6-parameters grid */}
-          <div className="parameters-grid">
+          <div className="parameters-grid" style={{ alignSelf: 'stretch' }}>
             <div className="param-card health-premium">
               <div className="param-header-row">
                 <span className="param-label">Plant Health</span>
@@ -731,17 +731,17 @@ export default function OverviewTab({
 
           {/* ── CROP GROWTH & HARVEST CALENDAR (Replaced task checklist) ── */}
           <div className="panel-card" style={{ gap: '14px', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <Calendar size={16} style={{ color: 'var(--primary)' }} />
-                  <span>Crop Growth & Harvest Calendar</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+              <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '7px', textAlign: 'left', width: '100%', margin: 0 }}>
+                  <Calendar size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                  <span style={{ textAlign: 'left' }}>Crop Growth & Harvest Calendar</span>
                 </div>
-                <span className="panel-card-subtitle" style={{ margin: '2px 0 0 0' }}>
+                <span className="panel-card-subtitle" style={{ margin: '4px 0 0 0', textAlign: 'left' }}>
                   Calculated maturity dates & milestone schedules for multi-crop NFT bays
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                 <button
                   onClick={prevMonth}
                   style={{ border: 'none', background: 'var(--bg-panel)', borderRadius: '6px', padding: '4px', cursor: 'pointer', display: 'flex', color: 'var(--text-main)' }}
