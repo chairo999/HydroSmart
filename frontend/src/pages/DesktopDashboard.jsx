@@ -31,7 +31,13 @@ export default function DesktopDashboard() {
   });
   const [dosing, setDosing] = useState({
     nutrientA_ml: 2.4, nutrientB_ml: 1.8, phUp_ml: 0.0, phDown_ml: 0.6,
-    mlpConfidence: 94.2, lastInference: new Date().toISOString(), manualOverride: false
+    mlpConfidence: 94.2, lastInference: new Date().toISOString(), manualOverride: false,
+    lastPumped: {
+      nutrientA: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      nutrientB: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+      phUp: new Date(Date.now() - 135 * 60 * 1000).toISOString(),
+      phDown: new Date(Date.now() - 38 * 60 * 1000).toISOString()
+    }
   });
   const [overrides, setOverrides] = useState({
     waterPump: true, growLights: true, exhaustFan: false, dosingPumps: true
@@ -41,6 +47,25 @@ export default function DesktopDashboard() {
   const [cropProfile, setCropProfile] = useState(null);
   const [history, setHistory] = useState([]);
   const [connected, setConnected] = useState(true);
+  // Live pumping activity logs (from Firebase or local simulator)
+  const [pumpingLogs, setPumpingLogs] = useState([]);
+  // Historical sensor readings logs (never overwrite or delete previous readings)
+  const [sensorLogs, setSensorLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hydrosmart_sensor_history_log');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  // Per-pump independent last-activated timestamps (ISO string or null)
+  const [pumpTimestamps, setPumpTimestamps] = useState({
+    nutrientA: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    nutrientB: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+    phUp: new Date(Date.now() - 135 * 60 * 1000).toISOString(),
+    phDown: new Date(Date.now() - 38 * 60 * 1000).toISOString()
+  });
+
 
   // --- Scheduler & Settings Integration (from Mobile) ---
   const [selectedCropTab, setSelectedCropTab] = useState('lettuce');
@@ -192,10 +217,70 @@ export default function DesktopDashboard() {
       setCropProfile(data.cropProfile || fallbackCropProfiles[data.activeCrop || 'lettuce']);
       setHistory(data.history || []);
       setConnected(true);
+
+      // Update pumping logs (Firebase: real events; local: simulated)
+      if (data.pumpingLogs && data.pumpingLogs.length > 0) {
+        setPumpingLogs(data.pumpingLogs);
+      }
+
+      // Update per-pump independent timestamps from Firebase pump_events or local dosing.lastPumped
+      if (data.pumpTimestamps) {
+        setPumpTimestamps(prev => ({
+          nutrientA: data.pumpTimestamps.nutrientA || prev.nutrientA,
+          nutrientB: data.pumpTimestamps.nutrientB || prev.nutrientB,
+          phUp:      data.pumpTimestamps.phUp      || prev.phUp,
+          phDown:    data.pumpTimestamps.phDown    || prev.phDown
+        }));
+      } else if (data.dosing?.lastPumped) {
+        // Local simulator: pick up per-pump timestamps from dosing.lastPumped
+        setPumpTimestamps(prev => ({
+          nutrientA: data.dosing.lastPumped.nutrientA || prev.nutrientA,
+          nutrientB: data.dosing.lastPumped.nutrientB || prev.nutrientB,
+          phUp:      data.dosing.lastPumped.phUp      || prev.phUp,
+          phDown:    data.dosing.lastPumped.phDown    || prev.phDown
+        }));
+      }
+      // Update historical sensor logs — preserve every reading without overwriting
+      if (data.sensorLogs && data.sensorLogs.length > 0) {
+        setSensorLogs(prev => {
+          const merged = [...data.sensorLogs];
+          const existingIds = new Set(data.sensorLogs.map(l => l.id || l.timestamp));
+          prev.forEach(item => {
+            const id = item.id || item.timestamp;
+            if (!existingIds.has(id)) merged.push(item);
+          });
+          merged.sort((a, b) => b.timestamp - a.timestamp);
+          try { localStorage.setItem('hydrosmart_sensor_history_log', JSON.stringify(merged.slice(0, 500))); } catch (e) {}
+          return merged;
+        });
+      } else if (data.sensors) {
+        setSensorLogs(prev => {
+          const now = Date.now();
+          // Check if latest item is within 2s to avoid identical duplicates
+          if (prev.length > 0 && now - prev[0].timestamp < 2000) return prev;
+          const newEntry = {
+            id: `sensor-${now}`,
+            timestamp: now,
+            date: new Date(now).toISOString().slice(0, 10),
+            time: new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            ph: data.sensors.ph,
+            tds: data.sensors.tds,
+            ec: data.sensors.ec,
+            waterTemp: data.sensors.waterTemp,
+            waterLevel: data.sensors.waterLevel,
+            airTemp: data.sensors.airTemp,
+            humidity: data.sensors.humidity
+          };
+          const next = [newEntry, ...prev.slice(0, 499)];
+          try { localStorage.setItem('hydrosmart_sensor_history_log', JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+      }
     } catch (e) {
       setConnected(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchData();
@@ -432,8 +517,12 @@ export default function DesktopDashboard() {
               setDesktopTab={setDesktopTab}
               greenhouseSections={greenhouseSections}
               updateGreenhouseSection={updateGreenhouseSection}
+              pumpingLogs={pumpingLogs}
+              pumpTimestamps={pumpTimestamps}
+              sensorLogs={sensorLogs}
             />
           )}
+
 
           {/* VIEW: GREENHOUSE MAP TAB */}
           {desktopTab === 'map' && (
