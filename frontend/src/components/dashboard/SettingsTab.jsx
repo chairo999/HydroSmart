@@ -97,7 +97,7 @@ export default function SettingsTab({
       if (res.hasData && res.sensors) {
         setFbTestStatus({
           type: 'success',
-          message: `Connected to Firebase! Live sensor readings: pH ${res.sensors.ph} • TDS ${res.sensors.tds} ppm • Water ${res.sensors.waterTemp}°C • Air ${res.sensors.airTemp}°C • Humidity ${res.sensors.humidity}%`
+          message: `Connected to Firebase! Live hardware probe readings: pH ${res.sensors.ph} • TDS ${res.sensors.tds} ppm • Water ${res.sensors.waterTemp}°C • Reservoir Level ${res.sensors.waterLevel} cm`
         });
       } else {
         setFbTestStatus({
