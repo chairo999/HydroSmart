@@ -178,12 +178,12 @@ export default function MonitorTab({
       {/* ── BOTTOM SECTION: Automatic Ultrasonic Water-Level Monitor ── */}
       <div className="panel-card" style={{ padding: '24px', gap: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
-          <div>
-            <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <div style={{ width: '100%', textAlign: 'left' }}>
+            <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '7px', width: '100%', textAlign: 'left' }}>
               <Zap size={16} style={{ color: 'var(--primary)' }} />
               <span>Automatic Water-Level Monitor</span>
             </div>
-            <span className="panel-card-subtitle">
+            <span className="panel-card-subtitle" style={{ display: 'block', textAlign: 'left', marginTop: '6px' }}>
               Ultrasonic reservoir sensor — continuously monitored, no scheduling required
             </span>
           </div>

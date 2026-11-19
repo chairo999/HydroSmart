@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Leaf, Thermometer, Sun, Droplet, Wind, Zap, Cpu, RefreshCw, Check, ChevronRight, Activity, Clock,
-  ArrowUp, ArrowDown, ExternalLink, X, FileText, CheckCircle2, Search, Calendar, ChevronLeft,
+  ArrowUp, ArrowDown, X, FileText, CheckCircle2, Search, Calendar, ChevronLeft,
   Moon, AlertCircle, Info, Sparkles, Sprout
 } from 'lucide-react';
 import { CROP_IMAGES, CROP_SPECIES, CROP_DETAILS, GREENHOUSE_SECTIONS, formatShortDate } from '../../shared/constants';
@@ -612,34 +612,54 @@ export default function OverviewTab({
             {/* Multi-Crop Cultivation Summary (Replaced single crop banner) */}
             <div style={{
               background: 'var(--bg-card-hover)',
-              borderRadius: '10px',
-              padding: '10px 14px',
-              marginTop: '14px',
               border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              marginTop: '14px',
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              gap: '12px',
+              width: '100%',
+              boxSizing: 'border-box'
             }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0 }}>
+                <span style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  color: 'var(--text-tertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  textAlign: 'left'
+                }}>
                   Multi-Crop Cultivation
                 </span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)', marginTop: '2px' }}>
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: 'var(--text-main)',
+                  marginTop: '4px',
+                  lineHeight: 1.3,
+                  textAlign: 'left'
+                }}>
                   {uniqueCultivatedCrops.length} Active Varieties across {sectionsList.length} Bays
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {uniqueCultivatedCrops.map(crop => (
                   <span
                     key={crop}
                     style={{
-                      fontSize: '11px',
+                      fontSize: '10px',
+                      lineHeight: 1.2,
                       background: 'var(--bg-panel)',
                       border: '1px solid var(--border-color)',
-                      padding: '2px 6px',
-                      borderRadius: '6px',
-                      fontWeight: 600,
-                      color: 'var(--text-secondary)'
+                      padding: '4px 7px',
+                      borderRadius: '999px',
+                      fontWeight: 700,
+                      color: 'var(--text-secondary)',
+                      whiteSpace: 'nowrap'
                     }}
                     title={crop}
                   >
@@ -756,9 +776,6 @@ export default function OverviewTab({
                       Latest Live Action
                     </span>
                   </div>
-                  <span style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    View All Logs ({allSystemLogs.length}) <ExternalLink size={11} />
-                  </span>
                 </div>
 
                 <div style={{ color: 'var(--text-secondary)', fontSize: '11px', marginTop: '5px' }}>

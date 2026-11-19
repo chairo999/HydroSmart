@@ -373,7 +373,7 @@ export default function SettingsTab({
             <Cpu size={15} style={{ color: 'var(--primary)' }} />
             <div className="panel-card-title">NFT Hydroponics Setup</div>
           </div>
-          <span className="panel-card-subtitle">Primary sensor hardware and live telemetry</span>
+          <span className="panel-card-subtitle">Primary sensor hardware and calibration references</span>
 
           <div style={{ width: '100%', height: '100px', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
             <img src="/images/hydro-system.jpg" style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Hydroponics System Rig" />
@@ -385,26 +385,18 @@ export default function SettingsTab({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
-            {PRIMARY_SENSORS.map((s, i) => {
-              let liveVal = '—';
-              if (s.key === 'ph') liveVal = sensors?.ph ?? '—';
-              else if (s.key === 'tds') liveVal = `${sensors?.tds ?? Math.round((sensors?.ec ?? 1.5) * 500)} ppm`;
-              else if (s.key === 'waterTemp') liveVal = sensors?.waterTemp != null ? `${sensors.waterTemp}°C` : '—';
-              else if (s.key === 'airTemp') liveVal = (sensors?.airTemp != null && sensors?.humidity != null) ? `${sensors.airTemp}°C / ${sensors.humidity}%` : '—';
-              else if (s.key === 'waterLevel') liveVal = sensors?.waterLevel != null ? `${sensors.waterLevel}%` : '—';
-              return (
-                <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < PRIMARY_SENSORS.length - 1 ? '1px solid var(--border-color)' : 'none', fontSize: '12px', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '15px' }}>{s.icon}</span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{s.hardware}</div>
-                    </div>
+            {PRIMARY_SENSORS.map((s, i) => (
+              <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < PRIMARY_SENSORS.length - 1 ? '1px solid var(--border-color)' : 'none', fontSize: '12px', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '15px' }}>{s.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{s.hardware}</div>
                   </div>
-                  <span style={{ fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap', flexShrink: 0 }}>{liveVal}</span>
                 </div>
-              );
-            })}
+                <span style={{ fontWeight: 700, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', flexShrink: 0 }}>Reference</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -412,14 +404,14 @@ export default function SettingsTab({
       {/* Right Column: Firebase Integration, Preferences & Calibration */}
       <div className="map-right-panel" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Firebase Realtime Database Integration Card */}
-        <div className="panel-card" style={{ gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+        <div className="panel-card" style={{ gap: '16px', textAlign: 'left' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', textAlign: 'left' }}>
+            <div style={{ textAlign: 'left' }}>
+              <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', gap: '7px', justifyContent: 'flex-start', textAlign: 'left' }}>
                 <Database size={16} style={{ color: 'var(--primary)' }} />
                 <span>Firebase Realtime Database</span>
               </div>
-              <span className="panel-card-subtitle">Connect live hardware cloud sync via Firebase RTDB</span>
+              <span className="panel-card-subtitle" style={{ marginTop: '4px', display: 'block', textAlign: 'left' }}>Connect live hardware cloud sync via Firebase RTDB</span>
             </div>
             <a
               href="https://console.firebase.google.com/u/0/project/hydrosmart-sensor-data/overview"
@@ -651,23 +643,26 @@ export default function SettingsTab({
           </div>
         </div>
 
-        {/* Diagnostics and Support */}
+        {/* About & Manual */}
         <div className="panel-card" style={{ gap: '16px' }}>
-          <div className="panel-card-title">Diagnostics & Support</div>
-          <span className="panel-card-subtitle">Calibrate probes and view documents</span>
+          <div className="panel-card-title">About & Manual</div>
+          <span className="panel-card-subtitle">Overview, operating guidance, and calibration basics</span>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', alignItems: 'center' }}>
-              <span className="text-secondary">Dosing Calibration</span>
-              <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{dosing.mlpConfidence}% Confidence Index</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            <div>
+              <b style={{ color: 'var(--text-main)' }}>System overview:</b> HydroSmart is a premium hydroponic monitoring dashboard for NFT grow systems. It tracks reservoir conditions, crop growth, nutrient dosing, and greenhouse performance from a single interface.
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', alignItems: 'center' }}>
-              <span className="text-secondary">Sensor Calibration</span>
-              <span style={{ fontWeight: 600 }}>pH: {sensors.ph} / TDS Nutrients: {sensors.tds || Math.round(sensors.ec * 500)} ppm</span>
+            <div>
+              <b style={{ color: 'var(--text-main)' }}>Main features:</b> live pH and EC/TDS monitoring, water-level safeguards, crop-stage insights, calibration settings, and cloud synchronization with the Firebase backend.
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="text-secondary">System Specs & Hardware Details</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-tertiary)' }}>Firmware v2.4.0</span>
+            <div>
+              <b style={{ color: 'var(--text-main)' }}>Dashboard navigation:</b> use the Overview page for system status, Growth for weekly trend tracking, Greenhouse Map to organize bays, and Settings to adjust profiles, preferences, and calibration values.
+            </div>
+            <div>
+              <b style={{ color: 'var(--text-main)' }}>Calibration guidance:</b> compare the live readings against reference instruments and adjust the corresponding calibration values when the system drifts from expected levels. Keep pH, EC/TDS, temperature, and water-level readings within normal operating ranges.
+            </div>
+            <div>
+              <b style={{ color: 'var(--text-main)' }}>Troubleshooting:</b> if a sensor value appears unavailable or abnormal, confirm the probe is connected, the data source is active, and the calibration values are sensible before rerunning the sensor check.
             </div>
           </div>
         </div>

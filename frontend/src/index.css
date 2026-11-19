@@ -1007,7 +1007,8 @@ body {
   position: absolute;
   width: 28px;
   height: 28px;
-  background: white;
+  background: var(--bg-card);
+  color: var(--text-main);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1551,7 +1552,7 @@ input:checked + .sim-slider:before {
 }
 
 .recommendation-item-card {
-  background: white;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
