@@ -404,7 +404,7 @@ export default function SettingsTab({
       {/* Right Column: Firebase Integration, Preferences & Calibration */}
       <div className="map-right-panel" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* Firebase Realtime Database Integration Card */}
-        <div className="panel-card" style={{ gap: '16px', textAlign: 'left' }}>
+        <div className="panel-card settings-scrollable-card" style={{ gap: '16px', textAlign: 'left' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', textAlign: 'left' }}>
             <div style={{ textAlign: 'left' }}>
               <div className="panel-card-title" style={{ display: 'flex', alignItems: 'center', gap: '7px', justifyContent: 'flex-start', textAlign: 'left' }}>
@@ -427,7 +427,7 @@ export default function SettingsTab({
             </a>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="settings-card-scroll-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* Firebase Active Toggle */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -588,11 +588,11 @@ export default function SettingsTab({
         </div>
 
         {/* System Preferences Card */}
-        <div className="panel-card" style={{ gap: '16px' }}>
+        <div className="panel-card settings-scrollable-card" style={{ gap: '16px' }}>
           <div className="panel-card-title">System Preferences</div>
           <span className="panel-card-subtitle">Configure notification and power alerts</span>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div className="settings-card-scroll-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {/* Theme Toggle */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -644,11 +644,11 @@ export default function SettingsTab({
         </div>
 
         {/* About & Manual */}
-        <div className="panel-card" style={{ gap: '16px' }}>
+        <div className="panel-card settings-scrollable-card" style={{ gap: '16px' }}>
           <div className="panel-card-title">About & Manual</div>
           <span className="panel-card-subtitle">Overview, operating guidance, and calibration basics</span>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          <div className="settings-card-scroll-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
             <div>
               <b style={{ color: 'var(--text-main)' }}>System overview:</b> HydroSmart is a premium hydroponic monitoring dashboard for NFT grow systems. It tracks reservoir conditions, crop growth, nutrient dosing, and greenhouse performance from a single interface.
             </div>

@@ -536,16 +536,6 @@ export default function OverviewTab({
               </span>
               <span className="param-info" style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
                 <span>DHT22 Ambient Sensor</span>
-                <span style={{
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  color: weatherData.isDay ? '#d97706' : '#6366f1',
-                  background: weatherData.isDay ? 'rgba(245, 158, 11, 0.12)' : 'rgba(99, 102, 241, 0.12)',
-                  padding: '1px 6px',
-                  borderRadius: '4px'
-                }}>
-                  • Reads during daytime only {weatherData.isDay ? '(Active)' : '(Night Standby)'}
-                </span>
               </span>
             </div>
 
