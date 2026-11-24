@@ -382,24 +382,27 @@ setInterval(() => {
     }
   }
 
-  // Preserve historical sensor readings: append each reading without overwriting
+  // Preserve historical sensor readings: append reading once every 1 minute (60,000ms)
   const nowTime = new Date();
   const timeStr = nowTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const dateStr = nowTime.toISOString().slice(0, 10);
   
-  sensorLogs.push({
-    id: `sensor-${nowTime.getTime()}-${Math.random().toString(36).substr(2, 5)}`,
-    timestamp: nowTime.getTime(),
-    date: dateStr,
-    time: timeStr,
-    ph: sensors.ph,
-    ec: sensors.ec,
-    tds: sensors.tds,
-    waterTemp: sensors.waterTemp,
-    airTemp: sensors.airTemp,
-    humidity: sensors.humidity,
-    waterLevel: sensors.waterLevel
-  });
+  const lastSensorLog = sensorLogs[sensorLogs.length - 1];
+  if (!lastSensorLog || nowTime.getTime() - lastSensorLog.timestamp >= 60000) {
+    sensorLogs.push({
+      id: `sensor-${nowTime.getTime()}-${Math.random().toString(36).substr(2, 5)}`,
+      timestamp: nowTime.getTime(),
+      date: dateStr,
+      time: timeStr,
+      ph: sensors.ph,
+      ec: sensors.ec,
+      tds: sensors.tds,
+      waterTemp: sensors.waterTemp,
+      airTemp: sensors.airTemp,
+      humidity: sensors.humidity,
+      waterLevel: sensors.waterLevel
+    });
+  }
 
   // Chart history
   if (Math.random() > 0.85) {

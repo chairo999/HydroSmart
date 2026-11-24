@@ -257,7 +257,8 @@ export default function DesktopDashboard() {
         setSensorLogs(prev => {
           const now = Date.now();
           // Check if latest item is within 2s to avoid identical duplicates
-          if (prev.length > 0 && now - prev[0].timestamp < 2000) return prev;
+          // Record sensor history every 1 minute (60,000ms) instead of every few seconds
+          if (prev.length > 0 && now - prev[0].timestamp < 60000) return prev;
           const newEntry = {
             id: `sensor-${now}`,
             timestamp: now,
