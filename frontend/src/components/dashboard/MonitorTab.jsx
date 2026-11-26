@@ -64,10 +64,10 @@ export default function MonitorTab({
   const crops = ['lettuce', 'pechay', 'spinach', 'basil'];
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+    <div className="fade-in monitor-tab-wrapper">
 
       {/* ── TOP SECTION: Hydroponic Monitor (centered) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '16px', alignItems: 'start' }}>
+      <div className="monitor-main-grid">
 
         {/* LEFT: Crop List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -217,7 +217,7 @@ export default function MonitorTab({
         )}
 
         {/* Gauge + stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '24px', alignItems: 'center' }}>
+        <div className="monitor-gauge-grid">
 
           {/* Circular / bar gauge */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>

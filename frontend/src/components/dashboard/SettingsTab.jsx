@@ -131,7 +131,7 @@ export default function SettingsTab({
   };
 
   return (
-    <div className="map-view-container fade-in" style={{ gridTemplateColumns: '1fr 1fr' }}>
+    <div className="map-view-container fade-in settings-two-col">
       {/* Left Column: Profile & NFT Hardware Specs */}
       <div className="map-left-panel" style={{ overflowY: 'auto' }}>
         {/* Profile Card */}

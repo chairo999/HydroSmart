@@ -392,7 +392,7 @@ export default function OverviewTab({
               </a>
             </div>
 
-            <div className="recommendations-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="recommendations-grid">
               {['lettuce', 'pechay', 'spinach', 'basil'].map(crop => (
                 <div
                   key={crop}

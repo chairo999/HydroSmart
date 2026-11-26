@@ -246,7 +246,7 @@ export default function GrowthTab({
       </div>
 
       {/* ── MAIN GRID: Chart (left) + Bay Status Cards (right) ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px', alignItems: 'start' }}>
+      <div className="growth-main-grid">
 
         {/* LEFT: Per-Bay Weekly Chart */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

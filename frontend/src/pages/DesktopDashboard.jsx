@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Home, Compass, Cpu, Activity, Settings } from 'lucide-react';
+import { Home, Compass, Cpu, Activity, Settings, Menu, X } from 'lucide-react';
 import { GREENHOUSE_SECTIONS } from '../shared/constants';
 import {
   isFirebaseEnabled, getTelemetryFromFirebase, updateOverrideInFirebase, selectCropInFirebase
@@ -122,6 +122,7 @@ export default function DesktopDashboard() {
 
   // --- UI Presentation State ---
   const [desktopTab, setDesktopTab] = useState('overview'); // 'overview' or 'map'
+  const [isNavOpen, setIsNavOpen] = useState(false);
 
   // Selected Greenhouse Section
   const [activeSectionId, setActiveSectionId] = useState(3);
@@ -443,6 +444,7 @@ export default function DesktopDashboard() {
     <div className={`app-container ${dashboardTheme === 'dark' ? 'phone-dark-mode' : ''}`}>
       {/* ── HEADER ── */}
       <header className="app-header">
+        <button className="mobile-menu-toggle" type="button" aria-label={isNavOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={isNavOpen} onClick={() => setIsNavOpen(open => !open)}>{isNavOpen ? <X size={22} /> : <Menu size={22} />}</button>
         <div className="header-left">
           <img src="/logo.png" alt="Hydrosmart Logo" style={{ height: '46px', width: 'auto', marginRight: '8px', objectFit: 'contain' }} />
           <h1 className="brand-name">HydroSmart</h1>
@@ -454,44 +456,45 @@ export default function DesktopDashboard() {
           </span>
         </div>
       </header>
+      {isNavOpen && <button className="mobile-nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setIsNavOpen(false)} />}
 
       {/* ── DESKTOP DASHBOARD MODE ── */}
       <div className="desktop-layout">
         {/* Sidebar */}
-        <nav className="desktop-sidebar">
+        <nav className={`desktop-sidebar ${isNavOpen ? 'is-open' : ''}`} aria-label="Dashboard navigation">
           <button
             className={`sidebar-nav-item ${desktopTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setDesktopTab('overview')}
-            title="Overview Dashboard"
+            onClick={() => { setDesktopTab('overview'); setIsNavOpen(false); }}
+            title="Overview Dashboard" aria-label="Overview Dashboard"
           >
             <Home size={20} />
           </button>
           <button
             className={`sidebar-nav-item ${desktopTab === 'map' ? 'active' : ''}`}
-            onClick={() => setDesktopTab('map')}
-            title="Greenhouse Section Map"
+            onClick={() => { setDesktopTab('map'); setIsNavOpen(false); }}
+            title="Greenhouse Section Map" aria-label="Greenhouse Section Map"
           >
             <Compass size={20} />
           </button>
           <div className="sidebar-divider" />
           <button
             className={`sidebar-nav-item ${desktopTab === 'monitor' ? 'active' : ''}`}
-            onClick={() => setDesktopTab('monitor')}
-            title="Watering & Device Monitor"
+            onClick={() => { setDesktopTab('monitor'); setIsNavOpen(false); }}
+            title="Watering & Device Monitor" aria-label="Watering & Device Monitor"
           >
             <Cpu size={20} />
           </button>
           <button
             className={`sidebar-nav-item ${desktopTab === 'growth' ? 'active' : ''}`}
-            onClick={() => setDesktopTab('growth')}
-            title="Analytics & Growth Track"
+            onClick={() => { setDesktopTab('growth'); setIsNavOpen(false); }}
+            title="Analytics & Growth Track" aria-label="Analytics & Growth Track"
           >
             <Activity size={20} />
           </button>
           <button
             className={`sidebar-nav-item ${desktopTab === 'settings' ? 'active' : ''}`}
-            onClick={() => setDesktopTab('settings')}
-            title="Settings & Calibrations"
+            onClick={() => { setDesktopTab('settings'); setIsNavOpen(false); }}
+            title="Settings & Calibrations" aria-label="Settings & Calibrations"
           >
             <Settings size={20} />
           </button>
